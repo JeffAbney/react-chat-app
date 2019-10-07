@@ -48,3 +48,26 @@
   #messages li:nth-child(odd) {
 	background: #eee;
   }
+
+  .user-container {
+	  position: fixed;
+	  top: 0;
+	  right: 0;
+	  width: 20%;
+	  border: 1px solid grey;
+	  min-height: 100px;
+	  background: #000;
+  }
+
+  .user-container li {
+	padding: 5px 10px;
+	background: grey;
+  }
+
+  .user-container li:nth-child(odd) {
+	background: #eee;
+  }
+
+  .user-header {
+	  background: #eee;
+  }
