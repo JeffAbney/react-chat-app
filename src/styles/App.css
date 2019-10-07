@@ -57,6 +57,11 @@
 	  border: 1px solid grey;
 	  min-height: 100px;
 	  background: #000;
+	  list-style-type: none;
+  }
+
+  .user-list {
+	list-style-type: none;
   }
 
   .user-container li {
