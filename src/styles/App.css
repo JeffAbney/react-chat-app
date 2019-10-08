@@ -76,3 +76,34 @@
   .user-header {
 	  background: #eee;
   }
+
+  .private-message-container {
+	  position: fixed;
+	  bottom: 43px;
+	  right: 0;
+	  background: transparent;
+	  border: 1px solid grey;
+	  height: 300px;
+	  width: 250px;
+	  margin-right: 15px;
+  }
+
+  .recipient-username {
+	  width: 100%;
+	  background: grey;
+	  padding: 4px;
+  }
+  
+  .pm-message-form {
+	  width: 250px;
+	  bottom: 43px;
+  }
+
+  .pm-message {
+	  width: 80%;
+  }
+
+  .pm-button {
+	  width: 19%;
+  }
+
