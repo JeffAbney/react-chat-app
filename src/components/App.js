@@ -4,14 +4,16 @@ import '../styles/App.css';
 import $ from 'jquery';
 import PrivateMessage from './PrivateMessage.js'
 
- const SERVER = 'https://chat-app-server-jeff.herokuapp.com/';
+//  const SERVER = 'https://chat-app-server-jeff.herokuapp.com/';
+const SERVER = 'http://localhost:3000/';
 
 function ChatApp(props) {
 
   function getName() {
     let newName = prompt('What should we call you?', 'NewUser');
     if (newName == null || newName == '' || newName == 'NewUser') {
-      return `NewUser ${Math.floor(Math.random() * 10)}`
+      let randomNum = Math.floor(Math.random() * 50000);
+      return `NewUser${randomNum}`
     } else {
       return newName;
     }
@@ -37,8 +39,11 @@ function ChatApp(props) {
     socket.emit('user connected', refUsername.current); //on connect, send message to server with username
     socket.on('users changed', function (userArr) {
       setUserList(userArr.map((username, i) => {
-        console.log("username ", username)
-        return <li key={`user-${i}`}>{username}</li>
+        return <li
+          key={`user-${i}`}
+          onClick={() => console.log(username)}>
+          {username}
+        </li>
       }))
     });
 
@@ -49,23 +54,37 @@ function ChatApp(props) {
       $('#m').val(''); // reset message field to blank 
       return false;
     });
-    
+
     socket.on('chat message', function (msg) {
       $('#messages').append($('<li>').text(msg));
     }); //on receving a message, append it
 
-    $('#private-message-form').submit(function (e) {
-      console.log("sending private message");
-      let recepient = "John";
+    $(`#private-message-form-John`).submit(function (e) {
+     
+      let sender = username;
+      console.log("sending private message from", sender);
+      let recipient = "John";
       e.preventDefault(); // prevents page reloading
-      socket.emit('private message', recepient, username + ": " + $('#pm').val());
-      $('#private-messages').append($('<li>').text("You: " + $('#pm').val())); //when I send message, append with 'you:'
-      $('#m').val(''); // reset message field to blank 
+      socket.emit('private message', sender, recipient, sender + ": " + $(`#pm-${recipient}`).val());
+      $(`#private-messages-${recipient}`).append($('<li>').text("You: " + $(`#pm-${recipient}`).val())); //when I send message, append with 'you:'
+      $(`#pm-${recipient}`).val(''); // reset message field to blank 
       return false;
     });
 
-    socket.on('private message', function (msg) {
-      $('#private-messages').append($('<li>').text(msg));
+    $(`#private-message-form-Mike`).submit(function (e) {
+      let sender = username;
+      console.log("sending private message from", sender);
+      let recipient = "Mike";
+      e.preventDefault(); // prevents page reloading
+      socket.emit('private message', sender, recipient, username + ": " + $(`#pm-${recipient}`).val());
+      $(`#private-messages-${recipient}`).append($('<li>').text("You: " + $(`#pm-${recipient}`).val())); //when I send message, append with 'you:'
+      $(`#pm-${recipient}`).val(''); // reset message field to blank 
+      return false;
+    });
+
+    socket.on('private message', function (sender, msg) {
+      console.log("recieving pm");
+      $(`#private-messages-${sender}`).append($('<li>').text(msg));
     }); //on receving a message, append it
 
     $('#m').focus(function (e) {
@@ -93,7 +112,6 @@ function ChatApp(props) {
         </ul>
       </div>
       <ul id="messages">
-
       </ul>
       <div id="typing-messsage"></div>
       <form id="chat-message-form" action="">
@@ -101,11 +119,11 @@ function ChatApp(props) {
         <button>Send</button>
       </form>
       <div className="private-message-container">
-        <PrivateMessage />
+        <PrivateMessage recipient={"John"}/>
+        <PrivateMessage recipient={"Mike"}/>
       </div>
     </div>
   )
-
 }
 
 export default ChatApp;
