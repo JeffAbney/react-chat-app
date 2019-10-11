@@ -19,6 +19,10 @@ function ChatApp(props) {
     }
   }
 
+  function privateMessages(arr) {
+    arr.map((recipient) => <PrivateMessage recipient={recipient} />)
+  }
+
   const [username, setUsername] = useState(getName);
   let refUsername = useRef(username);
   useEffect(() => {
@@ -32,6 +36,9 @@ function ChatApp(props) {
   });
 
   const [userList, setUserList] = useState();
+
+  const [pmArr, setPmArr] = useState(["John", "Mike"]);
+
 
   useEffect(() => {
     var socket = io(SERVER);
@@ -59,31 +66,28 @@ function ChatApp(props) {
       $('#messages').append($('<li>').text(msg));
     }); //on receving a message, append it
 
-    $(`#private-message-form-John`).submit(function (e) {
-     
-      let sender = username;
-      console.log("sending private message from", sender);
-      let recipient = "John";
-      e.preventDefault(); // prevents page reloading
-      socket.emit('private message', sender, recipient, sender + ": " + $(`#pm-${recipient}`).val());
-      $(`#private-messages-${recipient}`).append($('<li>').text("You: " + $(`#pm-${recipient}`).val())); //when I send message, append with 'you:'
-      $(`#pm-${recipient}`).val(''); // reset message field to blank 
-      return false;
-    });
-
-    $(`#private-message-form-Mike`).submit(function (e) {
-      let sender = username;
-      console.log("sending private message from", sender);
-      let recipient = "Mike";
-      e.preventDefault(); // prevents page reloading
-      socket.emit('private message', sender, recipient, username + ": " + $(`#pm-${recipient}`).val());
-      $(`#private-messages-${recipient}`).append($('<li>').text("You: " + $(`#pm-${recipient}`).val())); //when I send message, append with 'you:'
-      $(`#pm-${recipient}`).val(''); // reset message field to blank 
-      return false;
-    });
+    // Add submit beahvior to each pm submit button
+    pmArr.map(
+      (recipient) => {
+        $(`#pm-button-${recipient}`).on('click',
+          function (e) {
+            let sender = username;
+            console.log("sending private message from", sender);
+            e.preventDefault(); // prevents page reloading
+            socket.emit('private message', sender, recipient, sender + ": " + $(`#pm-${recipient}`).val());
+            $(`#private-messages-${recipient}`).append($('<li>').text("You: " + $(`#pm-${recipient}`).val())); //when I send message, append with 'you:'
+            $(`#pm-${recipient}`).val(''); // reset message field to blank 
+            return false;
+          }
+        )
+      }
+    )
 
     socket.on('private message', function (sender, msg) {
       console.log("recieving pm");
+      if (pmArr.indexOf(sender) !== 0) {
+        setPmArr(pmArr.push(sender))
+      };
       $(`#private-messages-${sender}`).append($('<li>').text(msg));
     }); //on receving a message, append it
 
@@ -103,6 +107,7 @@ function ChatApp(props) {
 
   }, []);
 
+
   return (
     <div>
       <div className="user-container">
@@ -119,8 +124,8 @@ function ChatApp(props) {
         <button>Send</button>
       </form>
       <div className="private-message-container">
-        <PrivateMessage recipient={"John"}/>
-        <PrivateMessage recipient={"Mike"}/>
+        <PrivateMessage recipient={"John"} onClick={(e) => submitPm(e, "John")} />
+        <PrivateMessage recipient={"Mike"} />
       </div>
     </div>
   )
