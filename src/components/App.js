@@ -1,3 +1,4 @@
+"use strict";
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import '../styles/App.css';
@@ -19,9 +20,20 @@ function ChatApp(props) {
     }
   }
 
-  function privateMessages(arr) {
-    arr.map((recipient) => <PrivateMessage recipient={recipient} />)
-  }
+  const [pmArr, setPmArr] = useState([]);
+
+  const [privateMessageBoxes, setPrivateMessageBoxes] = useState([]);
+  const [pmMessages, setPmMessages] = useState({});
+
+  useEffect(() => {
+    setPrivateMessageBoxes(function () {
+      console.log('setting pms');
+      console.log('messages in this thread ', pmMessages)
+      return pmArr.map((recipient) => <PrivateMessage key={`${recipient}-pm`} recipient={recipient} messages={pmMessages[recipient]}  />)
+    })
+  }, [pmArr, pmMessages]);
+
+
 
   const [username, setUsername] = useState(getName);
   let refUsername = useRef(username);
@@ -37,8 +49,6 @@ function ChatApp(props) {
 
   const [userList, setUserList] = useState();
 
-  const [pmArr, setPmArr] = useState(["John", "Mike"]);
-
 
   useEffect(() => {
     var socket = io(SERVER);
@@ -48,10 +58,13 @@ function ChatApp(props) {
       setUserList(userArr.map((username, i) => {
         return <li
           key={`user-${i}`}
-          onClick={() => console.log(username)}>
+          onClick={() => {
+            addPmBox(username);
+          }}>
           {username}
         </li>
       }))
+
     });
 
     $('#chat-message-form').submit(function (e) {
@@ -66,30 +79,39 @@ function ChatApp(props) {
       $('#messages').append($('<li>').text(msg));
     }); //on receving a message, append it
 
-    // Add submit beahvior to each pm submit button
-    pmArr.map(
-      (recipient) => {
-        $(`#pm-button-${recipient}`).on('click',
-          function (e) {
-            let sender = username;
-            console.log("sending private message from", sender);
-            e.preventDefault(); // prevents page reloading
-            socket.emit('private message', sender, recipient, sender + ": " + $(`#pm-${recipient}`).val());
-            $(`#private-messages-${recipient}`).append($('<li>').text("You: " + $(`#pm-${recipient}`).val())); //when I send message, append with 'you:'
-            $(`#pm-${recipient}`).val(''); // reset message field to blank 
-            return false;
-          }
-        )
+
+    // Add submit beahvior to each pm submit button with EVENT DELEGATION
+
+    document.getElementById("pm-container").addEventListener("click", function (e) {
+      if (e.target && e.target.nodeName == "BUTTON") {
+        let sender = username;
+        let recipient = event.target.getAttribute('data-recipient');
+        console.log("sending private message from", sender);
+        e.preventDefault();
+        socket.emit('private message', sender, recipient, sender + ": " + $(`#pm-${recipient}`).val());
+        $(`#private-messages-${recipient}`).append($('<li>').text("You: " + $(`#pm-${recipient}`).val()));
+        $(`#pm-${recipient}`).val(''); // reset message field to blank 
+        return false;
       }
-    )
+    });
+
+    function removePmBox(partner) {
+      setPmArr(pmArr.splice(pmArr.indexOf(partner), 1));
+    }
+
+    function addPmBox(partner) {
+      console.log("trying to set pmArr");
+      setPmArr(() => [...pmArr, partner]);
+    }
 
     socket.on('private message', function (sender, msg) {
-      console.log("recieving pm");
+      console.log("recieving pm from ", sender);
       if (pmArr.indexOf(sender) !== 0) {
-        setPmArr(pmArr.push(sender))
-      };
-      $(`#private-messages-${sender}`).append($('<li>').text(msg));
+        addPmBox(sender);
+      }
+      setPmMessages({[sender]: [...pmMessages[sender], msg]})
     }); //on receving a message, append it
+    // ******************** problem setting pm messages state *******
 
     $('#m').focus(function (e) {
       socket.emit('focus on', refUsername.current);
@@ -123,9 +145,8 @@ function ChatApp(props) {
         <input id="m" autoComplete="off" />
         <button>Send</button>
       </form>
-      <div className="private-message-container">
-        <PrivateMessage recipient={"John"} onClick={(e) => submitPm(e, "John")} />
-        <PrivateMessage recipient={"Mike"} />
+      <div className="private-message-container" id="pm-container">
+        {privateMessageBoxes}
       </div>
     </div>
   )
