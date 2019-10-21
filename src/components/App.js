@@ -21,15 +21,24 @@ function ChatApp(props) {
   }
 
   const [pmArr, setPmArr] = useState([]);
+  let refPmArr = useRef(pmArr);
+  useEffect(() => {
+    refPmArr.current = pmArr;
+  });
+
+
+  const [pmMessages, setPmMessages] = useState({});
+  let refPmMessages = useRef(pmMessages);
+  useEffect(() => {
+    refPmMessages.current = pmMessages;
+  });
 
   const [privateMessageBoxes, setPrivateMessageBoxes] = useState([]);
-  const [pmMessages, setPmMessages] = useState({});
-
   useEffect(() => {
     setPrivateMessageBoxes(function () {
       console.log('setting pms');
       console.log('messages in this thread ', pmMessages)
-      return pmArr.map((recipient) => <PrivateMessage key={`${recipient}-pm`} recipient={recipient} messages={pmMessages[recipient]}  />)
+      return pmArr.map((recipient) => <PrivateMessage key={`${recipient}-pm`} recipient={recipient} dataMessage={pmMessages[recipient]}/>)
     })
   }, [pmArr, pmMessages]);
 
@@ -64,7 +73,6 @@ function ChatApp(props) {
           {username}
         </li>
       }))
-
     });
 
     $('#chat-message-form').submit(function (e) {
@@ -100,18 +108,28 @@ function ChatApp(props) {
     }
 
     function addPmBox(partner) {
-      console.log("trying to set pmArr");
-      setPmArr(() => [...pmArr, partner]);
+      console.log("trying to set pmArr from", [...refPmArr.current]);
+      if (refPmArr.current.indexOf(partner) < 0) {
+        setPmArr(() => [...refPmArr.current, partner]);
+        console.log('new pmArr', [...refPmArr.current, partner]);
+      } else {
+        console.log("already have that pm box");
+      }
     }
 
     socket.on('private message', function (sender, msg) {
       console.log("recieving pm from ", sender);
-      if (pmArr.indexOf(sender) !== 0) {
+      if (refPmArr.current.indexOf(sender) < 0) {
+        console.log("New pm");
         addPmBox(sender);
+        setPmMessages(Object.assign({}, pmMessages, {[sender]: "anything!"})); //this gives above line time to create element before
+        $(`#private-messages-${sender}`).append($('<li>').text(msg)); //this line appends to that same element
+      } else {
+        $(`#private-messages-${sender}`).append($('<li>').text(msg));
       }
-      setPmMessages({[sender]: [...pmMessages[sender], msg]})
     }); //on receving a message, append it
-    // ******************** problem setting pm messages state *******
+    
+    
 
     $('#m').focus(function (e) {
       socket.emit('focus on', refUsername.current);
