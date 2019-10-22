@@ -19,7 +19,16 @@ module.exports = {
 	  {
 	    test: /\.css$/,
 	    use: ["style-loader", "css-loader"]	
-	  }
+    },
+    {
+      test: /\.(png|jpg|gif|ttf|wav|mp3)$/,
+      use: [
+        {
+          loader: 'file-loader',
+          options: {}
+        }
+      ]
+  }
     ]
   },
   plugins: [
