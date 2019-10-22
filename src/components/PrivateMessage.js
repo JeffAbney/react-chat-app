@@ -1,12 +1,19 @@
 import React from 'react';
 import '../styles/App.css';
+import closeIcon from '../images/close.png';
 
 function PrivateMessage(props) {
-console.log("rendering with msg", props.dataMessage);
+  
+
   return (
     <div className='pm-box' id={`pm-box-${props.recipient}`}>
-      <p className="recipient-username">{props.recipient}</p>
-      <ul id={`private-messages-${props.recipient}`}>
+      <div className="pm-header">
+        <p className="recipient-username">{props.recipient}</p>
+        <div className="pm-close-container">
+          <img className='pm-close-icon' src={closeIcon} onClick={() => props.closeBox(props.recipient)} />
+        </div>
+      </div>
+      <ul className='messages' id={`private-messages-${props.recipient}`}>
       </ul>
       <div id="typing-private-messsage"></div>
       <form id={`private-message-form-${props.recipient}`} className="pm-message-form" action="">

@@ -38,7 +38,7 @@ function ChatApp(props) {
     setPrivateMessageBoxes(function () {
       console.log('setting pms');
       console.log('messages in this thread ', pmMessages)
-      return pmArr.map((recipient) => <PrivateMessage key={`${recipient}-pm`} recipient={recipient} dataMessage={pmMessages[recipient]}/>)
+      return pmArr.map((recipient) => <PrivateMessage key={`${recipient}-pm`} recipient={recipient} closeBox={removePmBox}/>)
     })
   }, [pmArr, pmMessages]);
 
@@ -58,6 +58,24 @@ function ChatApp(props) {
 
   const [userList, setUserList] = useState();
 
+  function addPmBox(partner) {
+    if (refPmArr.current.indexOf(partner) < 0) {
+      setPmArr(() => [...refPmArr.current, partner]);
+    } else {
+      $(`#pm-${partner}`).focus();
+    }
+  }
+
+  useEffect( () => {
+    console.log("trying to focus ", `#pm-${pmArr[pmArr.length-1]}`);
+    $(`#pm-${pmArr[pmArr.length-1]}`).focus();
+  }, [privateMessageBoxes])
+
+  function removePmBox(partner) {
+    let newArr = [...pmArr];
+    newArr.splice(pmArr.indexOf(partner), 1)
+    setPmArr(newArr);
+  }
 
   useEffect(() => {
     var socket = io(SERVER);
@@ -94,7 +112,6 @@ function ChatApp(props) {
       if (e.target && e.target.nodeName == "BUTTON") {
         let sender = username;
         let recipient = event.target.getAttribute('data-recipient');
-        console.log("sending private message from", sender);
         e.preventDefault();
         socket.emit('private message', sender, recipient, sender + ": " + $(`#pm-${recipient}`).val());
         $(`#private-messages-${recipient}`).append($('<li>').text("You: " + $(`#pm-${recipient}`).val()));
@@ -102,20 +119,6 @@ function ChatApp(props) {
         return false;
       }
     });
-
-    function removePmBox(partner) {
-      setPmArr(pmArr.splice(pmArr.indexOf(partner), 1));
-    }
-
-    function addPmBox(partner) {
-      console.log("trying to set pmArr from", [...refPmArr.current]);
-      if (refPmArr.current.indexOf(partner) < 0) {
-        setPmArr(() => [...refPmArr.current, partner]);
-        console.log('new pmArr', [...refPmArr.current, partner]);
-      } else {
-        console.log("already have that pm box");
-      }
-    }
 
     socket.on('private message', function (sender, msg) {
       console.log("recieving pm from ", sender);
@@ -156,7 +159,7 @@ function ChatApp(props) {
           {userList}
         </ul>
       </div>
-      <ul id="messages">
+      <ul className="messages" id="messages">
       </ul>
       <div id="typing-messsage"></div>
       <form id="chat-message-form" action="">
